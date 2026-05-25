@@ -1,6 +1,5 @@
-# render.yaml – Final correct version for Render Blueprint
 services:
-  # ------------------- FRONTEND (Node.js) -------------------
+  # Frontend (Next.js)
   - type: web
     name: veloztrade-frontend
     runtime: node
@@ -15,12 +14,13 @@ services:
       - key: NEXT_PUBLIC_WS_URL
         value: wss://veloztrade-api-gateway.onrender.com
 
-  # ------------------- API GATEWAY (Docker) -------------------
+  # API Gateway (Express)
   - type: web
     name: veloztrade-api-gateway
+    runtime: node
     plan: starter
-    dockerfilePath: backend/api-gateway/Dockerfile
-    dockerContext: backend/api-gateway
+    buildCommand: cd backend/api-gateway && npm install
+    startCommand: cd backend/api-gateway && node server.js
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -37,12 +37,13 @@ services:
       - key: SENDGRID_API_KEY
         sync: false
 
-  # ------------------- MARKET DATA (Docker) -------------------
+  # Market Data (WebSocket client)
   - type: web
     name: veloztrade-market-data
+    runtime: node
     plan: starter
-    dockerfilePath: backend/market-data/Dockerfile
-    dockerContext: backend/market-data
+    buildCommand: cd backend/market-data && npm install
+    startCommand: cd backend/market-data && node index.js
     envVars:
       - key: REDIS_URL
         sync: false
@@ -51,24 +52,26 @@ services:
       - key: ALLTICK_WS_URL
         value: wss://quote.alltick.io/quote-b-api/ws
 
-  # ------------------- ORDER ENGINE (Docker worker) -------------------
+  # Order Engine (background worker)
   - type: worker
     name: veloztrade-order-engine
+    runtime: node
     plan: starter
-    dockerfilePath: backend/order-engine/Dockerfile
-    dockerContext: backend/order-engine
+    buildCommand: cd backend/order-engine && npm install
+    startCommand: cd backend/order-engine && node index.js
     envVars:
       - key: DATABASE_URL
         sync: false
       - key: REDIS_URL
         sync: false
 
-  # ------------------- ADMIN PANEL (Docker) -------------------
+  # Admin Panel (React – built with serve)
   - type: web
     name: veloztrade-admin
+    runtime: node
     plan: starter
-    dockerfilePath: backend/admin-panel/Dockerfile
-    dockerContext: backend/admin-panel
+    buildCommand: cd backend/admin-panel && npm install && npm run build
+    startCommand: cd backend/admin-panel && npx serve -s build -l 3002
     envVars:
       - key: REACT_APP_API_URL
         value: https://veloztrade-api-gateway.onrender.com
