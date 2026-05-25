@@ -1,0 +1,108 @@
+# render.yaml - Blueprint for VelozTrade on Render.com
+# This file defines all services: database, Redis, frontend, API gateway, market data, order engine, admin panel
+
+services:
+  # ------------------- MANAGED DATABASES -------------------
+  - type: postgresql
+    name: veloztrade-db
+    plan: starter                    # $7/month; use "free" for testing (but free has disk limit)
+    ipAllowList: []                  # only allow connections from other Render services (internal)
+
+  - type: redis
+    name: veloztrade-redis
+    plan: starter                    # $5/month
+    ipAllowList: []
+
+  # ------------------- FRONTEND (Next.js) -------------------
+  - type: web
+    name: veloztrade-frontend
+    runtime: node
+    plan: starter
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18.18.0
+      - key: NEXT_PUBLIC_API_URL
+        value: https://veloztrade-api-gateway.onrender.com
+      - key: NEXT_PUBLIC_WS_URL
+        value: wss://veloztrade-api-gateway.onrender.com
+
+  # ------------------- API GATEWAY (Express + WebSocket) -------------------
+  - type: web
+    name: veloztrade-api-gateway
+    runtime: image
+    plan: starter
+    dockerfilePath: backend/api-gateway/Dockerfile
+    dockerContext: backend/api-gateway
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: veloztrade-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: veloztrade-redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true          # Render auto-generates a secure secret
+      - key: NODE_ENV
+        value: production
+      - key: ALLTICK_API_KEY
+        sync: false                  # you will set this manually in Render dashboard
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: SUMSUB_TOKEN
+        sync: false
+      - key: SUMSUB_SECRET_KEY
+        sync: false
+
+  # ------------------- MARKET DATA SERVICE (AllTick WebSocket listener) -------------------
+  - type: web
+    name: veloztrade-market-data
+    runtime: image
+    plan: starter
+    dockerfilePath: backend/market-data/Dockerfile
+    dockerContext: backend/market-data
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: veloztrade-redis
+          property: connectionString
+      - key: ALLTICK_API_KEY
+        sync: false
+      - key: ALLTICK_WS_URL
+        value: wss://quote.alltick.io/quote-b-api/ws
+
+  # ------------------- ORDER ENGINE (Background worker) -------------------
+  - type: worker
+    name: veloztrade-order-engine
+    runtime: image
+    plan: starter
+    dockerfilePath: backend/order-engine/Dockerfile
+    dockerContext: backend/order-engine
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: veloztrade-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: veloztrade-redis
+          property: connectionString
+
+  # ------------------- ADMIN PANEL (React standalone) -------------------
+  - type: web
+    name: veloztrade-admin
+    runtime: image
+    plan: starter
+    dockerfilePath: backend/admin-panel/Dockerfile
+    dockerContext: backend/admin-panel
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://veloztrade-api-gateway.onrender.com

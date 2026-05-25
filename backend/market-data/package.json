@@ -1,0 +1,17 @@
+{
+  "name": "market-data",
+  "version": "1.0.0",
+  "description": "VelozTrade Market Data Service - WebSocket connection to AllTick for live prices",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "ws": "^8.14.2",
+    "ioredis": "^5.3.2",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
