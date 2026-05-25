@@ -1,6 +1,6 @@
-# render.yaml - Final working version for VelozTrade
+# render.yaml - Corrected for Render Blueprint (Docker builds use "build:" object)
 services:
-  # ------------------- FRONTEND (Node.js runtime) -------------------
+  # ------------------- FRONTEND (Node runtime) -------------------
   - type: web
     name: veloztrade-frontend
     runtime: node
@@ -15,12 +15,13 @@ services:
       - key: NEXT_PUBLIC_WS_URL
         value: wss://veloztrade-api-gateway.onrender.com
 
-  # ------------------- API GATEWAY (Docker – no runtime key!) -------------------
+  # ------------------- API GATEWAY (Docker build) -------------------
   - type: web
     name: veloztrade-api-gateway
     plan: starter
-    dockerfilePath: backend/api-gateway/Dockerfile
-    dockerContext: backend/api-gateway
+    build:                                    # <-- critical: use "build:" object
+      dockerfilePath: backend/api-gateway/Dockerfile
+      dockerContext: backend/api-gateway
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -37,12 +38,13 @@ services:
       - key: SENDGRID_API_KEY
         sync: false
 
-  # ------------------- MARKET DATA (Docker – no runtime key) -------------------
+  # ------------------- MARKET DATA (Docker build) -------------------
   - type: web
     name: veloztrade-market-data
     plan: starter
-    dockerfilePath: backend/market-data/Dockerfile
-    dockerContext: backend/market-data
+    build:
+      dockerfilePath: backend/market-data/Dockerfile
+      dockerContext: backend/market-data
     envVars:
       - key: REDIS_URL
         sync: false
@@ -51,24 +53,26 @@ services:
       - key: ALLTICK_WS_URL
         value: wss://quote.alltick.io/quote-b-api/ws
 
-  # ------------------- ORDER ENGINE (worker – Docker, no runtime key) -------------------
+  # ------------------- ORDER ENGINE (worker – Docker build) -------------------
   - type: worker
     name: veloztrade-order-engine
     plan: starter
-    dockerfilePath: backend/order-engine/Dockerfile
-    dockerContext: backend/order-engine
+    build:
+      dockerfilePath: backend/order-engine/Dockerfile
+      dockerContext: backend/order-engine
     envVars:
       - key: DATABASE_URL
         sync: false
       - key: REDIS_URL
         sync: false
 
-  # ------------------- ADMIN PANEL (Docker – no runtime key) -------------------
+  # ------------------- ADMIN PANEL (Docker build) -------------------
   - type: web
     name: veloztrade-admin
     plan: starter
-    dockerfilePath: backend/admin-panel/Dockerfile
-    dockerContext: backend/admin-panel
+    build:
+      dockerfilePath: backend/admin-panel/Dockerfile
+      dockerContext: backend/admin-panel
     envVars:
       - key: REACT_APP_API_URL
         value: https://veloztrade-api-gateway.onrender.com
