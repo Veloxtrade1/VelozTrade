@@ -1,6 +1,6 @@
-# render.yaml - Blueprint for VelozTrade (corrected)
+# render.yaml - Final working version for VelozTrade
 services:
-  # ------------------- FRONTEND (Next.js - Node runtime) -------------------
+  # ------------------- FRONTEND (Node.js runtime) -------------------
   - type: web
     name: veloztrade-frontend
     runtime: node
@@ -15,7 +15,7 @@ services:
       - key: NEXT_PUBLIC_WS_URL
         value: wss://veloztrade-api-gateway.onrender.com
 
-  # ------------------- API GATEWAY (Docker build) -------------------
+  # ------------------- API GATEWAY (Docker – no runtime key!) -------------------
   - type: web
     name: veloztrade-api-gateway
     plan: starter
@@ -23,9 +23,9 @@ services:
     dockerContext: backend/api-gateway
     envVars:
       - key: DATABASE_URL
-        sync: false          # set manually after DB creation
+        sync: false
       - key: REDIS_URL
-        sync: false          # set manually after Redis creation
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: NODE_ENV
@@ -37,7 +37,7 @@ services:
       - key: SENDGRID_API_KEY
         sync: false
 
-  # ------------------- MARKET DATA (Docker build) -------------------
+  # ------------------- MARKET DATA (Docker – no runtime key) -------------------
   - type: web
     name: veloztrade-market-data
     plan: starter
@@ -51,7 +51,7 @@ services:
       - key: ALLTICK_WS_URL
         value: wss://quote.alltick.io/quote-b-api/ws
 
-  # ------------------- ORDER ENGINE (worker - Docker build) -------------------
+  # ------------------- ORDER ENGINE (worker – Docker, no runtime key) -------------------
   - type: worker
     name: veloztrade-order-engine
     plan: starter
@@ -63,7 +63,7 @@ services:
       - key: REDIS_URL
         sync: false
 
-  # ------------------- ADMIN PANEL (Docker build) -------------------
+  # ------------------- ADMIN PANEL (Docker – no runtime key) -------------------
   - type: web
     name: veloztrade-admin
     plan: starter
